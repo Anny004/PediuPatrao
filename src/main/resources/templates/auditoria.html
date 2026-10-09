@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Fragmento injetado no layout.html via AuditoriaController -->
+<div th:fragment="content" class="container-fluid py-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📜 Registro de Auditoria do Sistema</h2>
+        <span class="badge bg-danger fs-6">Acesso Restrito: ADMIN / GERENTE</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0 align-middle">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Data / Hora</th>
+                        <th>Usuário (Perfil)</th>
+                        <th>Operação</th>
+                        <th>Entidade (ID)</th>
+                        <th>Campos Alterados (De ➔ Para)</th>
+                        <th>Justificativa</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="log : ${logs}">
+                        <td th:text="${#temporals.format(log.dataHora, 'dd/MM/yyyy HH:mm:ss')}">23/09/2026 - 14:35:00</td>
+                        <td>
+                            <strong th:text="${log.usuario}">atendente01</strong><br/>
+                            <small class="badge bg-info text-dark" th:text="${log.perfil}">GERENTE</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning text-dark" th:text="${log.tipoOperacao}">ALTERAÇÃO DE CLIENTE</span>
+                        </td>
+                        <td>
+                            <span th:text="${log.entidadeAfetada}">CLIENTE</span>
+                            <small class="text-muted" th:text="'(' + ${log.entidadeId} + ')'">(CLI001)</small>
+                        </td>
+                        <td>
+                            <ul class="list-unstyled mb-0 small">
+                                <li th:each="alt : ${log.alteracoes}">
+                                    <strong th:text="${alt.campo}">logradouro</strong>:
+                                    <span class="text-danger" th:text="${alt.valorAnterior}">Rua das Flores</span>
+                                    ➔
+                                    <span class="text-success fw-bold" th:text="${alt.valorNovo}">Av. Brasil</span>
+                                </li>
+                            </ul>
+                        </td>
+                        <td>
+                            <small class="text-muted" th:text="${log.justificativa != null ? log.justificativa : '-'}">-</small>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(logs)}">
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum registro de auditoria encontrado.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Gerenciamento de Pedidos</h2>
+        <a th:href="@{/pedidos/novo}" class="btn btn-primary">+ Novo Pedido</a>
+    </div>
+
+    <!-- Mensagens de Alerta -->
+    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Tabela de Pedidos -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Valor Total</th>
+                <th>Desconto (%)</th>
+                <th>Entrada (Resp. / Data)</th>
+                <th>Saída (Resp. / Data)</th>
+                <th>Justificativa (Cancelamento)</th>
+                <th>Ações (Atualizar Status)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="pedido : ${pedidos}">
+                <td th:text="${pedido.id}">#1</td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${#strings.equalsIgnoreCase(pedido.status, 'CANCELADO') ? 'bg-danger' :
+                                           (#strings.equalsIgnoreCase(pedido.status, 'FINALIZADO') or #strings.equalsIgnoreCase(pedido.status, 'ENTREGUE') ? 'bg-success' : 'bg-info')}"
+                          th:text="${pedido.status}">RECEBIDO</span>
+                </td>
+                <td th:text="${'R$ ' + #numbers.formatDecimal(pedido.valorTotal, 1, 2)}">R$ 0,00</td>
+
+                <!-- Coluna de Desconto (%) -->
+                <td>
+                    <span th:if="${!isGerente or #strings.equalsIgnoreCase(pedido.status, 'SAIU PARA ENTREGA') or #strings.equalsIgnoreCase(pedido.status, 'RETIRADO') or #strings.equalsIgnoreCase(pedido.status, 'FINALIZADO') or #strings.equalsIgnoreCase(pedido.status, 'ENTREGUE') or #strings.equalsIgnoreCase(pedido.status, 'CANCELADO')}"
+                          th:text="${pedido.desconto != null ? pedido.desconto + '%' : '0%'}">0%</span>
+
+                    <form th:if="${isGerente and !#strings.equalsIgnoreCase(pedido.status, 'SAIU PARA ENTREGA') and !#strings.equalsIgnoreCase(pedido.status, 'RETIRADO') and !#strings.equalsIgnoreCase(pedido.status, 'FINALIZADO') and !#strings.equalsIgnoreCase(pedido.status, 'ENTREGUE') and !#strings.equalsIgnoreCase(pedido.status, 'CANCELADO')}"
+                          th:action="@{/pedidos/aplicar-desconto}" method="post" class="d-flex gap-1 align-items-center">
+                        <input type="hidden" name="id" th:value="${pedido.id}" />
+                        <input type="number" name="desconto" step="0.1" min="0" max="20"
+                               class="form-control form-control-sm" style="width: 75px;"
+                               th:value="${pedido.desconto != null ? pedido.desconto : 0}" required />
+                        <button type="submit" class="btn btn-sm btn-outline-success" title="Aplicar Desconto">Aplicar Desconto</button>
+                    </form>
+                </td>
+
+                <td>
+                    <small th:text="${pedido.responsavelEntrada != null ? pedido.responsavelEntrada : '-'}"></small><br/>
+                    <small class="text-muted" th:text="${pedido.dataHoraEntrada != null ? #temporals.format(pedido.dataHoraEntrada, 'dd/MM/yyyy HH:mm') : '-'}"></small>
+                </td>
+                <td>
+                    <small th:text="${pedido.responsavelSaida != null ? pedido.responsavelSaida : '-'}"></small><br/>
+                    <small class="text-muted" th:text="${pedido.dataHoraSaida != null ? #temporals.format(pedido.dataHoraSaida, 'dd/MM/yyyy HH:mm') : '-'}"></small>
+                </td>
+                <td>
+                    <small class="text-danger fw-bold" th:text="${pedido.justificativaCancelamento != null ? pedido.justificativaCancelamento : '-'}"></small>
+                </td>
+                <td>
+                    <span th:if="${!podeAlterarStatus or #strings.equalsIgnoreCase(pedido.status, 'FINALIZADO') or #strings.equalsIgnoreCase(pedido.status, 'ENTREGUE') or #strings.equalsIgnoreCase(pedido.status, 'CANCELADO')}"
+                          class="text-muted small">
+                        Somente Leitura
+                    </span>
+
+                    <form th:if="${podeAlterarStatus and !#strings.equalsIgnoreCase(pedido.status, 'FINALIZADO') and !#strings.equalsIgnoreCase(pedido.status, 'ENTREGUE') and !#strings.equalsIgnoreCase(pedido.status, 'CANCELADO')}"
+                          th:action="@{/pedidos/atualizar-status}" method="post" class="d-flex gap-1 align-items-center">
+
+                        <input type="hidden" name="id" th:value="${pedido.id}" />
+
+                        <select name="novoStatus" class="form-select form-select-sm" style="min-width: 160px;" required>
+                            <option value="" disabled="disabled" selected="selected">Alterar status...</option>
+                            <option value="EM PREPARAÇÃO" th:if="${#strings.equalsIgnoreCase(pedido.status, 'RECEBIDO')}">EM PREPARAÇÃO</option>
+                            <option value="PRONTO" th:if="${#strings.equalsIgnoreCase(pedido.status, 'RECEBIDO') or #strings.equalsIgnoreCase(pedido.status, 'EM PREPARAÇÃO') or #strings.equalsIgnoreCase(pedido.status, 'EM PREPARO')}">PRONTO</option>
+                            <option value="SAIU PARA ENTREGA" th:if="${#strings.equalsIgnoreCase(pedido.status, 'PRONTO')}">SAIU PARA ENTREGA</option>
+                            <option value="RETIRADO" th:if="${#strings.equalsIgnoreCase(pedido.status, 'PRONTO')}">RETIRADO</option>
+                            <option value="FINALIZADO" th:if="${#strings.equalsIgnoreCase(pedido.status, 'SAIU PARA ENTREGA') or #strings.equalsIgnoreCase(pedido.status, 'RETIRADO')}">FINALIZADO</option>
+                            <option value="CANCELADO" th:if="${isGerente}">CANCELADO</option>
+                        </select>
+
+                        <input type="text" name="justificativa" class="form-control form-control-sm"
+                               placeholder="Motivo (se cancelar)"
+                               th:if="${isGerente}" />
+
+                        <button type="submit" class="btn btn-sm btn-outline-primary">OK</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(pedidos)}">
+                <td colspan="8" class="text-center text-muted">Nenhum pedido cadastrado.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
