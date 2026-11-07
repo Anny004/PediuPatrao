@@ -19,6 +19,8 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**").permitAll()
 
                         .requestMatchers("/usuarios/**", "/api/usuarios/**").hasRole("ADMIN")
+                        //adicionando rota dash
+                        .requestMatchers("/dashboard", "/api/v1/dashboard/**").hasAnyRole("ADMIN", "GERENTE")
 
                         .requestMatchers("/auditoria/**", "/api/auditoria/**").hasAnyRole("ADMIN", "GERENTE")
 
@@ -26,7 +28,19 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/home", true)
+                        .successHandler((request, response, authentication) -> {
+                            // Verifica se é Admin ou Gerente
+                            boolean isGestor = authentication.getAuthorities().stream()
+                                    .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN") || role.getAuthority().equals("ROLE_GERENTE"));
+
+                            if (isGestor) {
+                                // Redireciona ADMIN e GERENTE para o dashboard na rota /home
+                                response.sendRedirect("/home");
+                            } else {
+                                // Redireciona o ATENDENTE para a tela de pedidos (já que ele não pode ver o dashboard)
+                                response.sendRedirect("/pedidos");
+                            }
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout

@@ -9,13 +9,18 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1 class="m-0">Dashboard</h1>
+          <h1 class="m-0">Dashboard Administrativo</h1>
         </div>
         <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item active">Dashboard</li>
-          </ol>
+          <!-- Filtro de Período (RF05) -->
+          <div class="float-sm-right">
+            <select id="filtroPeriodo" class="form-control" onchange="carregarDashboard()">
+              <option value="hoje">Hoje</option>
+              <option value="7dias">Últimos 7 Dias</option>
+              <option value="30dias">Últimos 30 Dias</option>
+              <option value="mes">Este Mês</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
@@ -25,58 +30,61 @@
   <section class="content">
     <div class="container-fluid">
 
-      <!-- Cards Informativos (Widgets) -->
+      <!-- Cards Informativos (RF01) -->
       <div class="row">
-        <div class="col-12 col-sm-6 col-md-3">
+        <div class="col-12 col-sm-4">
           <div class="info-box mb-3">
             <span class="info-box-icon bg-info elevation-1"><i class="fas fa-shopping-cart"></i></span>
             <div class="info-box-content">
-              <span class="info-box-text">Pedidos Hoje</span>
-              <span class="info-box-number">45</span>
+              <span class="info-box-text">Total de Pedidos</span>
+              <span class="info-box-number" id="cardQtdPedidos">Carregando...</span>
             </div>
           </div>
         </div>
 
-        <div class="col-12 col-sm-6 col-md-3">
+        <div class="col-12 col-sm-4">
           <div class="info-box mb-3">
-            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-check-circle"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Entregues</span>
-              <span class="info-box-number">38</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-sm-6 col-md-3">
-          <div class="info-box mb-3">
-            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-users"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Clientes</span>
-              <span class="info-box-number">120</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-sm-6 col-md-3">
-          <div class="info-box mb-3">
-            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-dollar-sign"></i></span>
+            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-dollar-sign"></i></span>
             <div class="info-box-content">
               <span class="info-box-text">Faturamento</span>
-              <span class="info-box-number">R$ 3.450,00</span>
+              <span class="info-box-number" id="cardFaturamento">Carregando...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-4">
+          <div class="info-box mb-3">
+            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-chart-line"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Ticket Médio</span>
+              <span class="info-box-number" id="cardTicketMedio">Carregando...</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Painel / Tabela Principal -->
+      <!-- Gráficos (RF02, RF03, RF04) -->
       <div class="row">
-        <div class="col-md-12">
+        <!-- Gráfico de Status -->
+        <div class="col-md-6">
           <div class="card card-dark">
             <div class="card-header">
-              <h3 class="card-title">Resumo do Sistema</h3>
+              <h3 class="card-title">Situação dos Pedidos</h3>
             </div>
             <div class="card-body">
-              <p>Bem-vindo ao painel administrativo do <strong>Pediu Patrão</strong>.</p>
+              <canvas id="statusChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico de Produtos mais vendidos -->
+        <div class="col-md-6">
+          <div class="card card-dark">
+            <div class="card-header">
+              <h3 class="card-title">Top 5 Produtos</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="rankingChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
             </div>
           </div>
         </div>
@@ -85,7 +93,109 @@
     </div>
   </section>
 
-</div>
+  <!-- Importar o Chart.js para os gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Lógica JavaScript do Dashboard (RF06 e RF07) -->
+  <script>
+    // Variáveis globais para armazenar as instâncias dos gráficos e poder destruí-las antes de atualizar
+    let statusChartInstance = null;
+    let rankingChartInstance = null;
+
+    // Função para formatar moeda (R$)
+    const formatarMoeda = (valor) => {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+    };
+
+    // Função principal que carrega todos os dados
+    async function carregarDashboard() {
+      const periodo = document.getElementById('filtroPeriodo').value;
+      const baseUrl = '/api/v1/dashboard';
+
+      try {
+        // 1. Buscar Resumo (Cards)
+        const resResumo = await fetch(`${baseUrl}/resumo?periodo=${periodo}`);
+        const resumo = await resResumo.json();
+
+        document.getElementById('cardQtdPedidos').innerText = resumo.quantidadePedidos;
+        document.getElementById('cardFaturamento').innerText = formatarMoeda(resumo.faturamentoTotal);
+        document.getElementById('cardTicketMedio').innerText = formatarMoeda(resumo.ticketMedio);
+
+        // 2. Buscar Status dos Pedidos e Renderizar Gráfico
+        const resStatus = await fetch(`${baseUrl}/status?periodo=${periodo}`);
+        const statusData = await resStatus.json();
+        renderStatusChart(statusData);
+
+        // 3. Buscar Ranking de Produtos e Renderizar Gráfico
+        const resRanking = await fetch(`${baseUrl}/ranking-produtos?periodo=${periodo}`);
+        const rankingData = await resRanking.json();
+        renderRankingChart(rankingData);
+
+      } catch (error) {
+        console.error("Erro ao carregar o dashboard:", error);
+        alert("Ocorreu um erro ao buscar os dados do dashboard.");
+      }
+    }
+
+    // Função para renderizar o gráfico de Rosca (Status)
+    function renderStatusChart(dados) {
+      const ctx = document.getElementById('statusChart').getContext('2d');
+
+      if (statusChartInstance) {
+        statusChartInstance.destroy(); // Destrói o gráfico antigo se existir
+      }
+
+      const labels = dados.map(item => item.status);
+      const valores = dados.map(item => item.quantidade);
+
+      statusChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: valores,
+            backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    // Função para renderizar o gráfico de Barras (Ranking)
+    function renderRankingChart(dados) {
+      const ctx = document.getElementById('rankingChart').getContext('2d');
+
+      if (rankingChartInstance) {
+        rankingChartInstance.destroy();
+      }
+
+      const labels = dados.map(item => item.nomeProduto);
+      const valores = dados.map(item => item.quantidadeVendida);
+
+      rankingChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Quantidade Vendida',
+            data: valores,
+            backgroundColor: '#343a40'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // Carregar o dashboard automaticamente ao abrir a página
+    document.addEventListener("DOMContentLoaded", function() {
+      carregarDashboard();
+    });
+  </script>
+
+</div>
 </body>
 </html>
