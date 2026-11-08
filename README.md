@@ -41,7 +41,7 @@
 - **Integridade dos Logs**: Os logs de auditoria são imutáveis e protegidos contra remoção. O acesso à tela `/auditoria` é restrito a `ADMIN` e `GERENTE`.
 
 ---
-## Módulo 2: Dashboar Administrativo com API
+## Módulo 2: Dashboard Administrativo com API
 
 Painel estratégico para acompanhamento de vendas e identificação de tendências operacionais, consumindo dados via API RESTful dedicada.
 
