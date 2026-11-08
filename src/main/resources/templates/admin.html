@@ -5,115 +5,134 @@
 <!-- Fragmento de Conteúdo do Admin/Dashboard (injetado dentro do layout.html) -->
 <div th:fragment="content">
 
-  <div class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1 class="m-0">Dashboard Administrativo</h1>
+  <div class="container-fluid py-4">
+
+    <!-- Cabeçalho e Filtro (RF05) -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 m-0 text-dark fw-bold">Dashboard Administrativo</h1>
+
+      <!-- Filtro com Ícone de Funil -->
+      <div class="input-group shadow-sm" style="width: 250px;">
+        <span class="input-group-text bg-white text-secondary border-end-0">
+          <i class="bi bi-funnel-fill"></i>
+        </span>
+        <select id="filtroPeriodo" class="form-select border-start-0 ps-0" onchange="carregarDashboard()" style="cursor: pointer;">
+          <option value="hoje">Hoje</option>
+          <option value="7dias">Últimos 7 Dias</option>
+          <option value="30dias">Últimos 30 Dias</option>
+          <option value="mes">Este Mês</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Cards Informativos (RF01) -->
+    <div class="row mb-4">
+      <!-- Card Total de Pedidos -->
+      <div class="col-12 col-md-4 mb-3 mb-md-0">
+        <div class="card text-white bg-primary shadow border-0 h-100">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <p class="card-title text-uppercase fw-semibold mb-1" style="font-size: 0.9rem; letter-spacing: 0.5px;">Total de Pedidos</p>
+              <h2 class="m-0 display-6 fw-bold" id="cardQtdPedidos">--</h2>
+            </div>
+            <i class="bi bi-cart-check text-white-50" style="font-size: 3.5rem;"></i>
+          </div>
         </div>
-        <div class="col-sm-6">
-          <!-- Filtro de Período (RF05) -->
-          <div class="float-sm-right">
-            <select id="filtroPeriodo" class="form-control" onchange="carregarDashboard()">
-              <option value="hoje">Hoje</option>
-              <option value="7dias">Últimos 7 Dias</option>
-              <option value="30dias">Últimos 30 Dias</option>
-              <option value="mes">Este Mês</option>
-            </select>
+      </div>
+
+      <!-- Card Faturamento -->
+      <div class="col-12 col-md-4 mb-3 mb-md-0">
+        <div class="card text-white bg-success shadow border-0 h-100">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <p class="card-title text-uppercase fw-semibold mb-1" style="font-size: 0.9rem; letter-spacing: 0.5px;">Faturamento</p>
+              <h2 class="m-0 display-6 fw-bold" id="cardFaturamento">R$ 0,00</h2>
+            </div>
+            <i class="bi bi-currency-dollar text-white-50" style="font-size: 3.5rem;"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Ticket Médio -->
+      <div class="col-12 col-md-4">
+        <div class="card text-white bg-warning shadow border-0 h-100">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <p class="card-title text-uppercase fw-semibold mb-1 text-dark" style="font-size: 0.9rem; letter-spacing: 0.5px;">Ticket Médio</p>
+              <h2 class="m-0 display-6 fw-bold text-dark" id="cardTicketMedio">R$ 0,00</h2>
+            </div>
+            <i class="bi bi-graph-up-arrow text-dark" style="font-size: 3.5rem; opacity: 0.5;"></i>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Conteúdo Principal do Dashboard -->
-  <section class="content">
-    <div class="container-fluid">
-
-      <!-- Cards Informativos (RF01) -->
-      <div class="row">
-        <div class="col-12 col-sm-4">
-          <div class="info-box mb-3">
-            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-shopping-cart"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Total de Pedidos</span>
-              <span class="info-box-number" id="cardQtdPedidos">Carregando...</span>
-            </div>
+    <!-- Tendência (RF02) -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card shadow border-0">
+          <div class="card-header bg-white border-bottom pt-3 pb-2">
+            <h5 class="card-title fw-bold text-secondary"><i class="bi bi-activity me-2"></i>Evolução de Vendas (Faturamento Diário)</h5>
           </div>
-        </div>
-
-        <div class="col-12 col-sm-4">
-          <div class="info-box mb-3">
-            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-dollar-sign"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Faturamento</span>
-              <span class="info-box-number" id="cardFaturamento">Carregando...</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-sm-4">
-          <div class="info-box mb-3">
-            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-chart-line"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Ticket Médio</span>
-              <span class="info-box-number" id="cardTicketMedio">Carregando...</span>
-            </div>
+          <div class="card-body" id="tendenciaBody">
+            <canvas id="tendenciaChart" style="min-height: 350px; height: 350px; max-height: 350px; max-width: 100%;"></canvas>
           </div>
         </div>
       </div>
-
-      <!-- Gráficos (RF02, RF03, RF04) -->
-      <div class="row">
-        <!-- Gráfico de Status -->
-        <div class="col-md-6">
-          <div class="card card-dark">
-            <div class="card-header">
-              <h3 class="card-title">Situação dos Pedidos</h3>
-            </div>
-            <div class="card-body">
-              <canvas id="statusChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Gráfico de Produtos mais vendidos -->
-        <div class="col-md-6">
-          <div class="card card-dark">
-            <div class="card-header">
-              <h3 class="card-title">Top 5 Produtos</h3>
-            </div>
-            <div class="card-body">
-              <canvas id="rankingChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </section>
+
+    <!-- Gráficos (RF03, RF04) -->
+    <div class="row">
+      <!-- Gráfico de Status -->
+      <div class="col-md-6 mb-4 mb-md-0">
+        <div class="card shadow border-0 h-100">
+          <div class="card-header bg-white border-bottom pt-3 pb-2">
+            <h5 class="card-title fw-bold text-secondary"><i class="bi bi-pie-chart-fill me-2"></i>Situação dos Pedidos</h5>
+          </div>
+          <div class="card-body d-flex align-items-center justify-content-center">
+            <div style="width: 100%; height: 300px;">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico de Produtos mais vendidos -->
+      <div class="col-md-6">
+        <div class="card shadow border-0 h-100">
+          <div class="card-header bg-white border-bottom pt-3 pb-2">
+            <h5 class="card-title fw-bold text-secondary"><i class="bi bi-bar-chart-fill me-2"></i>Top 5 Produtos</h5>
+          </div>
+          <div class="card-body">
+            <div style="width: 100%; height: 300px;">
+              <canvas id="rankingChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End container-fluid -->
 
   <!-- Importar o Chart.js para os gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Lógica JavaScript do Dashboard (RF06 e RF07) -->
+  <!-- Lógica JavaScript do Dashboard -->
   <script>
-    // Variáveis globais para armazenar as instâncias dos gráficos e poder destruí-las antes de atualizar
     let statusChartInstance = null;
     let rankingChartInstance = null;
+    let tendenciaChartInstance = null;
 
-    // Função para formatar moeda (R$)
     const formatarMoeda = (valor) => {
       return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
     };
 
-    // Função principal que carrega todos os dados
     async function carregarDashboard() {
       const periodo = document.getElementById('filtroPeriodo').value;
       const baseUrl = '/api/v1/dashboard';
 
       try {
-        // 1. Buscar Resumo (Cards)
+        // 1. Resumo (Cards)
         const resResumo = await fetch(`${baseUrl}/resumo?periodo=${periodo}`);
         const resumo = await resResumo.json();
 
@@ -121,15 +140,20 @@
         document.getElementById('cardFaturamento').innerText = formatarMoeda(resumo.faturamentoTotal);
         document.getElementById('cardTicketMedio').innerText = formatarMoeda(resumo.ticketMedio);
 
-        // 2. Buscar Status dos Pedidos e Renderizar Gráfico
+        // 2. Status
         const resStatus = await fetch(`${baseUrl}/status?periodo=${periodo}`);
         const statusData = await resStatus.json();
         renderStatusChart(statusData);
 
-        // 3. Buscar Ranking de Produtos e Renderizar Gráfico
+        // 3. Ranking
         const resRanking = await fetch(`${baseUrl}/ranking-produtos?periodo=${periodo}`);
         const rankingData = await resRanking.json();
         renderRankingChart(rankingData);
+
+        // 4. Tendência
+        const resTendencia = await fetch(`${baseUrl}/tendencia?periodo=${periodo}`);
+        const tendenciaData = await resTendencia.json();
+        renderTendenciaChart(tendenciaData);
 
       } catch (error) {
         console.error("Erro ao carregar o dashboard:", error);
@@ -137,12 +161,67 @@
       }
     }
 
-    // Função para renderizar o gráfico de Rosca (Status)
+    function renderTendenciaChart(dados) {
+      const container = document.getElementById('tendenciaBody');
+
+      if (tendenciaChartInstance) {
+        tendenciaChartInstance.destroy();
+      }
+
+      if (!dados || dados.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning text-center m-4 py-4"><i class="bi bi-exclamation-triangle-fill fs-3 d-block mb-2"></i>Não há vendas finalizadas neste período.</div>';
+        return;
+      } else {
+        container.innerHTML = '<canvas id="tendenciaChart" style="min-height: 350px; height: 350px; max-height: 350px; max-width: 100%;"></canvas>';
+        const novoCtx = document.getElementById('tendenciaChart').getContext('2d');
+
+        const labels = dados.map(item => {
+          let partes = item.data.split('-');
+          return `${partes[2]}/${partes[1]}`;
+        });
+        const valores = dados.map(item => item.faturamento);
+
+        tendenciaChartInstance = new Chart(novoCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Faturamento (R$)',
+              data: valores,
+              borderColor: '#0d6efd', // Azul Bootstrap
+              backgroundColor: 'rgba(13, 110, 253, 0.15)',
+              borderWidth: 3,
+              pointBackgroundColor: '#0d6efd',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: '#0d6efd',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { borderDash: [5, 5] }
+              },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+    }
+
     function renderStatusChart(dados) {
       const ctx = document.getElementById('statusChart').getContext('2d');
 
       if (statusChartInstance) {
-        statusChartInstance.destroy(); // Destrói o gráfico antigo se existir
+        statusChartInstance.destroy();
       }
 
       const labels = dados.map(item => item.status);
@@ -154,14 +233,22 @@
           labels: labels,
           datasets: [{
             data: valores,
-            backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de']
+            backgroundColor: ['#dc3545', '#198754', '#ffc107', '#0dcaf0', '#0d6efd', '#6c757d'],
+            borderWidth: 2,
+            borderColor: '#fff'
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: {
+            legend: { position: 'right' }
+          }
+        }
       });
     }
 
-    // Função para renderizar o gráfico de Barras (Ranking)
     function renderRankingChart(dados) {
       const ctx = document.getElementById('rankingChart').getContext('2d');
 
@@ -179,18 +266,25 @@
           datasets: [{
             label: 'Quantidade Vendida',
             data: valores,
-            backgroundColor: '#343a40'
+            backgroundColor: '#343a40',
+            borderRadius: 4
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true } }
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            },
+            x: { grid: { display: false } }
+          }
         }
       });
     }
 
-    // Carregar o dashboard automaticamente ao abrir a página
     document.addEventListener("DOMContentLoaded", function() {
       carregarDashboard();
     });

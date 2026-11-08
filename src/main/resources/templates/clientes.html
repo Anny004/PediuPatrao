@@ -42,14 +42,23 @@
                         <td th:text="${c.telefone}">(00) 00000-0000</td>
                         <td th:text="${c.logradouro}">Rua Exemplo, 123</td>
                         <td class="text-center">
+
+                            <!-- Botão Editar (Ajustado com sintaxe segura) -->
                             <button class="btn btn-sm btn-outline-warning me-1"
                                     data-bs-toggle="modal"
-                                    th:data-bs-target="'#modalEditarCliente' + ${c.id}">
+                                    th:data-bs-target="|#modalEditarCliente${c.id}|">
                                 <i class="bi bi-pencil"></i> Editar
                             </button>
+
+                            <button class="btn btn-sm btn-outline-danger"
+                                    th:data-id="${c.id}"
+                                    onclick="excluirViaApi(this.getAttribute('data-id'))">
+                                <i class="bi bi-trash"></i> Excluir
+                            </button>
+
                         </td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(clientes)}">
+                    <tr th:if="${clientes == null or #lists.isEmpty(clientes)}">
                         <td colspan="5" class="text-center text-muted py-4">Nenhum cliente cadastrado.</td>
                     </tr>
                     </tbody>
@@ -58,9 +67,9 @@
         </div>
     </div>
 
-    <!-- Modais de Edição para cada Cliente (Dispara a Auditoria RF05) -->
+    <!-- Modais de Edição para cada Cliente -->
     <div th:each="c : ${clientes}">
-        <div class="modal fade" th:id="'modalEditarCliente' + ${c.id}" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" th:id="|modalEditarCliente${c.id}|" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <form th:action="@{/clientes/atualizar}" method="post">
@@ -125,6 +134,40 @@
         </div>
     </div>
 
+    <!-- Script para chamar a exclusão no backend -->
+    <script>
+        async function excluirViaApi(id) {
+            if (confirm('Tem certeza que deseja excluir este cliente?')) {
+                try {
+                    // Pega o token de segurança (CSRF) gerado no formulário
+                    const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+
+                    const headers = {};
+                    if (csrfToken) {
+                        headers['X-CSRF-TOKEN'] = csrfToken;
+                    }
+
+                    // Tenta excluir na URL da API
+                    const response = await fetch(`/api/clientes/${id}`, {
+                        method: 'DELETE',
+                        headers: headers
+                    });
+
+                    if (response.ok) {
+                        alert('Cliente excluído com sucesso!');
+                        window.location.reload();
+                    } else if (response.status === 403) {
+                        alert('Acesso negado: Ação restrita. Apenas o Gerente possui permissão para excluir clientes.');
+                    } else {
+                        const erroReal = await response.text();
+                        alert(`Falha na exclusão!`);
+                    }
+                } catch (error) {
+                    alert('Erro crítico no JavaScript: ' + error.message);
+                }
+            }
+        }
+    </script>
 </div>
 
 </body>

@@ -3,9 +3,11 @@ package com.umc.pediupatrao.controller;
 import com.umc.pediupatrao.entity.AlteracaoCampo;
 import com.umc.pediupatrao.entity.ItemPedido;
 import com.umc.pediupatrao.entity.Pedido;
+import com.umc.pediupatrao.entity.Produto;
 import com.umc.pediupatrao.repository.PedidoRepository;
 import com.umc.pediupatrao.service.AuditoriaService;
 import com.umc.pediupatrao.service.ClienteService;
+import com.umc.pediupatrao.service.ProdutoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -29,7 +31,10 @@ public class PedidoController {
     private AuditoriaService auditoriaService;
 
     @Autowired
-    private ClienteService clienteService; // 👈 Serviço de clientes injetado
+    private ClienteService clienteService;
+
+    @Autowired
+    private ProdutoService produtoService; // 👈 Serviço de produtos injetado!
 
     private boolean verificarGerente(Authentication authentication) {
         if (authentication == null) return false;
@@ -47,28 +52,17 @@ public class PedidoController {
 
     private boolean isTransicaoValida(String statusAtual, String novoStatus) {
         if (statusAtual == null) statusAtual = "RECEBIDO";
-
         String st = statusAtual.toUpperCase().trim();
-
-        if ("FINALIZADO".equals(st) || "ENTREGUE".equals(st) || "CANCELADO".equals(st)) {
-            return false;
-        }
+        if ("FINALIZADO".equals(st) || "ENTREGUE".equals(st) || "CANCELADO".equals(st)) return false;
 
         switch (st) {
-            case "RECEBIDO":
-                return novoStatus.equalsIgnoreCase("EM PREPARAÇÃO") || novoStatus.equalsIgnoreCase("EM PREPARO") || novoStatus.equalsIgnoreCase("CANCELADO");
+            case "RECEBIDO": return novoStatus.equalsIgnoreCase("EM PREPARAÇÃO") || novoStatus.equalsIgnoreCase("EM PREPARO") || novoStatus.equalsIgnoreCase("CANCELADO");
             case "EM PREPARAÇÃO":
-            case "EM PREPARO":
-                return novoStatus.equalsIgnoreCase("PRONTO") || novoStatus.equalsIgnoreCase("CANCELADO");
-            case "PRONTO":
-                return novoStatus.equalsIgnoreCase("SAIU PARA ENTREGA")
-                        || novoStatus.equalsIgnoreCase("RETIRADO")
-                        || novoStatus.equalsIgnoreCase("CANCELADO");
+            case "EM PREPARO": return novoStatus.equalsIgnoreCase("PRONTO") || novoStatus.equalsIgnoreCase("CANCELADO");
+            case "PRONTO": return novoStatus.equalsIgnoreCase("SAIU PARA ENTREGA") || novoStatus.equalsIgnoreCase("RETIRADO") || novoStatus.equalsIgnoreCase("CANCELADO");
             case "SAIU PARA ENTREGA":
-            case "RETIRADO":
-                return novoStatus.equalsIgnoreCase("FINALIZADO");
-            default:
-                return false;
+            case "RETIRADO": return novoStatus.equalsIgnoreCase("FINALIZADO");
+            default: return false;
         }
     }
 
@@ -91,7 +85,8 @@ public class PedidoController {
         pedido.getItens().add(new ItemPedido());
 
         model.addAttribute("pedido", pedido);
-        model.addAttribute("clientes", clienteService.listarClientes()); // 👈 Lista de clientes enviada para a view
+        model.addAttribute("clientes", clienteService.listarClientes());
+        model.addAttribute("produtos", produtoService.listarTodos()); // 👈 Lista de produtos enviada para a view
         model.addAttribute("isGerente", verificarGerente(authentication));
         model.addAttribute("content", "novo-pedido :: content");
         return "layout";
@@ -99,9 +94,8 @@ public class PedidoController {
 
     @PostMapping("/salvar")
     public String salvarPedido(@ModelAttribute Pedido pedido,
-                               @RequestParam(value = "nomeProduto", required = false) String nomeProduto,
+                               @RequestParam(value = "produtoId", required = false) String produtoId, // 👈 Agora recebe o ID do dropdown
                                @RequestParam(value = "quantidade", required = false, defaultValue = "1") Integer quantidade,
-                               @RequestParam(value = "precoUnitario", required = false, defaultValue = "0.0") Double precoUnitario,
                                Authentication authentication,
                                RedirectAttributes redirectAttributes) {
 
@@ -119,12 +113,17 @@ public class PedidoController {
             pedido.setDesconto(0.0);
         }
 
-        if (nomeProduto != null && !nomeProduto.isBlank()) {
-            ItemPedido item = new ItemPedido();
-            item.setNome(nomeProduto);
-            item.setQuantidade(quantidade != null ? quantidade : 1);
-            item.setPrecoUnitario(precoUnitario != null ? precoUnitario : 0.0);
-            pedido.getItens().add(item);
+        // 👈 Busca o produto no banco para pegar o nome e preço 100% seguros
+        if (produtoId != null && !produtoId.isBlank()) {
+            Optional<Produto> produtoOpt = produtoService.buscarPorId(produtoId);
+            if(produtoOpt.isPresent()) {
+                Produto prod = produtoOpt.get();
+                ItemPedido item = new ItemPedido();
+                item.setNome(prod.getNome());
+                item.setQuantidade(quantidade != null ? quantidade : 1);
+                item.setPrecoUnitario(prod.getPreco() != null ? prod.getPreco() : 0.0);
+                pedido.getItens().add(item);
+            }
         }
 
         double subtotal = pedido.getItens().stream()

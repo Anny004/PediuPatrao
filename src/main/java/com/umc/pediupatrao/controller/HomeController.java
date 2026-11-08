@@ -48,10 +48,10 @@ public class HomeController {
         return "layout";
     }
 
-    @GetMapping("/produtos")
-    public String produtos(Model model) {
-        model.addAttribute("content", "produtos :: content");
-        return "layout";
-    }
+    //@GetMapping("/produtos")
+    //public String produtos(Model model) {
+      //  model.addAttribute("content", "produtos :: content");
+       // return "layout";
+    //}
 
 }

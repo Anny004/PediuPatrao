@@ -2,6 +2,7 @@ package com.umc.pediupatrao.service;
 import com.umc.pediupatrao.dto.ProdutoRankingDTO;
 import com.umc.pediupatrao.dto.ResumoDashboardDTO;
 import com.umc.pediupatrao.dto.StatusPedidoDTO;
+import com.umc.pediupatrao.dto.TendenciaVendasDTO;
 import com.umc.pediupatrao.entity.Pedido;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -20,7 +21,6 @@ public class DashboardService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    // RF01: Indicadores gerais de vendas
     public ResumoDashboardDTO obterResumo(LocalDateTime inicio, LocalDateTime fim) {
         Aggregation agg = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("dataHoraEntrada").gte(inicio).lte(fim)),
@@ -42,7 +42,21 @@ public class DashboardService {
         return new ResumoDashboardDTO(qtd, faturamento, ticketMedio);
     }
 
-    // RF03: Situação dos pedidos
+
+    public List<TendenciaVendasDTO> obterTendenciasVendas(LocalDateTime inicio, LocalDateTime fim) {
+        Aggregation agg = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("dataHoraEntrada").gte(inicio).lte(fim)),
+                Aggregation.project("valorTotal")
+                        .and("dataHoraEntrada").dateAsFormattedString("%Y-%m-%d").as("data"),
+                Aggregation.group("data").sum("valorTotal").as("faturamento"),
+                Aggregation.project("faturamento").and("_id").as("data"),
+                Aggregation.sort(Sort.Direction.ASC, "data")
+        );
+
+        return mongoTemplate.aggregate(agg, Pedido.class, TendenciaVendasDTO.class).getMappedResults();
+    }
+
+
     public List<StatusPedidoDTO> obterStatusPedidos(LocalDateTime inicio, LocalDateTime fim) {
         Aggregation agg = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("dataHoraEntrada").gte(inicio).lte(fim)),
@@ -53,7 +67,6 @@ public class DashboardService {
         return mongoTemplate.aggregate(agg, Pedido.class, StatusPedidoDTO.class).getMappedResults();
     }
 
-    // RF04: Produtos mais vendidos
     public List<ProdutoRankingDTO> obterRankingProdutos(LocalDateTime inicio, LocalDateTime fim) {
         Aggregation agg = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("dataHoraEntrada").gte(inicio).lte(fim)),

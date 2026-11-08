@@ -3,6 +3,7 @@ package com.umc.pediupatrao.controller;
 import com.umc.pediupatrao.dto.ProdutoRankingDTO;
 import com.umc.pediupatrao.dto.ResumoDashboardDTO;
 import com.umc.pediupatrao.dto.StatusPedidoDTO;
+import com.umc.pediupatrao.dto.TendenciaVendasDTO;
 import com.umc.pediupatrao.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -48,5 +49,11 @@ public class DashboardApiController {
     @GetMapping("/ranking-produtos")
     public ResponseEntity<List<ProdutoRankingDTO>> getRankingProdutos(@RequestParam(required = false, defaultValue = "hoje") String periodo) {
         return ResponseEntity.ok(dashboardService.obterRankingProdutos(obterDataInicio(periodo), obterDataFim()));
+    }
+
+    // Adicionando
+    @GetMapping("/tendencia")
+    public ResponseEntity<List<TendenciaVendasDTO>> getTendencia(@RequestParam(required = false, defaultValue = "hoje") String periodo) {
+        return ResponseEntity.ok(dashboardService.obterTendenciasVendas(obterDataInicio(periodo), obterDataFim()));
     }
 }
