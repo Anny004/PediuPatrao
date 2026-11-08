@@ -334,3 +334,8 @@ Resultado obtido:
 A imagem abaixo apresenta o dashboard integrado à API, exibindo os indicadores, gráfico de evolução de vendas, situação dos pedidos e ranking de produtos.
 
 ![Dashboard](./dashboard.png)
+
+----
+
+# 7. Vídeo Apresentação
+## Link: https://youtu.be/YMpfiLRbWC4
