@@ -20,10 +20,10 @@ public class HomeController {
 
     @GetMapping({"/", "/home"})
     public String home(Model model, Authentication authentication) {
-        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN"));
+        boolean isGerente = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_GERENTE"));
 
-        if (isAdmin) {
+        if (isGerente) {
             model.addAttribute("content", "admin :: content");
         } else {
             model.addAttribute("content", "home :: content");
@@ -48,10 +48,10 @@ public class HomeController {
         return "layout";
     }
 
-    @GetMapping("/produtos")
-    public String produtos(Model model) {
-        model.addAttribute("content", "produtos :: content");
-        return "layout";
-    }
+    //@GetMapping("/produtos")
+    //public String produtos(Model model) {
+      //  model.addAttribute("content", "produtos :: content");
+       // return "layout";
+    //}
 
 }

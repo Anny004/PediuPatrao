@@ -7,12 +7,12 @@
 - **Back-end**: Java 17+, Spring Boot 3.x (Spring MVC, Spring Security, Spring Data MongoDB)
 - **Segurança**: Autenticação via formulário, proteção contra CSRF, senhas criptografadas em BCrypt com hash único
 - **Banco de Dados**: MongoDB
-- **Front-end**: Thymeleaf, HTML5, CSS3, Bootstrap 5, Bootstrap Icons
+- **Front-end**: Thymeleaf, HTML5, JavaScript (Fetch API, Chart.js), Bootstrap 5, Bootstrap Icons
 - **Build & Dependências**: Apache Maven
 
 ---
 
-## Requisitos Funcionais Implementados
+## Módulo 1: Operação e Atendimento
 
 ### RF01 — Autenticação, Controle de Acesso e Perfis
 - **Perfis de Acesso**:
@@ -41,7 +41,19 @@
 - **Integridade dos Logs**: Os logs de auditoria são imutáveis e protegidos contra remoção. O acesso à tela `/auditoria` é restrito a `ADMIN` e `GERENTE`.
 
 ---
+## Módulo 2: Dashboar Administrativo com API
 
+Painel estratégico para acompanhamento de vendas e identificação de tendências operacionais, consumindo dados via API RESTful dedicada.
+
+* **RF01 — Indicadores gerais de vendas**: Cards resumidos com faturamento total, ticket médio e volume de pedidos.
+* **RF02 — Análise de vendas (Gráficos)**: Visualização gráfica do faturamento ao longo do tempo (Chart.js).
+* **RF03 — Situação dos pedidos**: Mapeamento quantitativo dos pedidos por status atual.
+* **RF04 — Produtos mais vendidos**: Ranking dinâmico dos itens com maior saída na operação.
+* **RF05 — Filtros de consulta**: Capacidade de refinar a busca do painel por período temporal.
+* **RF06 — Integração com a API**: Comunicação 100% assíncrona entre o front-end (Thymeleaf/JS) e os endpoints REST.
+* **RF07 — Atualização e tratamento de dados**: Consistência na resposta da API e tratamento de cenários sem vendas no período.
+
+---
 ## Execução
 
 ### Pré-requisitos

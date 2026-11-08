@@ -7,6 +7,7 @@ import com.umc.pediupatrao.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class ClienteController {
         return clienteService.listarClientes();
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_GERENTE', 'GERENTE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluirCliente(@PathVariable String id) {
         clienteService.excluir(id);

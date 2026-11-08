@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <title>Lista de Clientes</title>
 </head>
@@ -19,23 +19,30 @@
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-dark">
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Endereço</th>
-                        <th class="text-end pe-4">Ações</th>
-                    </tr>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Endereço</th>
+                    <th class="text-center pe-4" style="width: 200px;">Ações</th>
+                </tr>
                 </thead>
                 <tbody id="clientes-tabela">
-                    <!-- Linhas carregadas via JavaScript -->
+                <!-- Linhas carregadas via JavaScript -->
                 </tbody>
             </table>
         </div>
     </div>
 
+    <!-- Validação infalível: Verifica a autoridade exata -->
+    <div id="permissao-excluir" style="display: none;" sec:authorize="hasAnyAuthority('ROLE_GERENTE')"></div>
+
     <script>
         const API_URL = '/api/clientes';
         const tabelaClientes = document.getElementById('clientes-tabela');
+
+        // Checa se a div secreta de permissão existe na tela
+        const divPermissao = document.getElementById('permissao-excluir');
+        const podeExcluir = (divPermissao !== null);
 
         function formatarEndereco(cliente) {
             const partes = [
@@ -51,48 +58,70 @@
         }
 
         async function carregarClientes() {
-            const response = await fetch(API_URL);
-            const clientes = await response.json();
-            tabelaClientes.innerHTML = '';
+            try {
+                const response = await fetch(API_URL);
+                const clientes = await response.json();
+                tabelaClientes.innerHTML = '';
 
-            if (clientes.length === 0) {
-                tabelaClientes.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="text-center text-muted py-5">
-                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                            Nenhum cliente cadastrado.
-                        </td>
-                    </tr>`;
-                return;
-            }
+                if (clientes.length === 0) {
+                    tabelaClientes.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                Nenhum cliente cadastrado.
+                            </td>
+                        </tr>`;
+                    return;
+                }
 
-            clientes.forEach(cliente => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${cliente.nome || '—'}</td>
-                    <td>${cliente.telefone || '—'}</td>
-                    <td>${formatarEndereco(cliente)}</td>
-                    <td class="text-end pe-4">
-                        <a href="/clientes/editar/${cliente.id}" class="btn btn-sm btn-outline-primary me-1">
+                clientes.forEach(cliente => {
+                    const row = document.createElement('tr');
+
+                    // Botão de Editar sempre aparece
+                    let botoesAcao = `
+                        <a href="/clientes/editar/${cliente.id}" class="btn btn-sm btn-outline-warning">
                             <i class="bi bi-pencil-fill"></i> Editar
                         </a>
-                        <button class="btn btn-sm btn-outline-danger" onclick="excluirCliente('${cliente.id}')">
-                            <i class="bi bi-trash-fill"></i> Excluir
-                        </button>
-                    </td>
-                `;
-                tabelaClientes.appendChild(row);
-            });
+                    `;
+
+                    // Se tiver a permissão (Admin ou Gerente), adiciona o Excluir do lado
+                    if (podeExcluir) {
+                        botoesAcao += `
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="excluirCliente('${cliente.id}')">
+                                <i class="bi bi-trash-fill"></i> Excluir
+                            </button>
+                        `;
+                    }
+
+                    row.innerHTML = `
+                        <td>${cliente.nome || '—'}</td>
+                        <td>${cliente.telefone || '—'}</td>
+                        <td>${formatarEndereco(cliente)}</td>
+                        <td class="text-center pe-4">
+                            <div class="d-flex justify-content-center">
+                                ${botoesAcao}
+                            </div>
+                        </td>
+                    `;
+                    tabelaClientes.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar clientes:", error);
+            }
         }
 
         async function excluirCliente(id) {
             if (confirm('Tem certeza que deseja excluir este cliente?')) {
-                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                if (response.ok) {
-                    alert('Cliente excluído com sucesso!');
-                    carregarClientes();
-                } else {
-                    alert('Erro ao excluir o cliente.');
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        alert('Cliente excluído com sucesso!');
+                        carregarClientes(); // Recarrega a tabela na mesma hora
+                    } else {
+                        alert('Erro ao excluir o cliente. Ele pode estar vinculado a um pedido.');
+                    }
+                } catch (error) {
+                    alert('Erro de comunicação com o servidor.');
                 }
             }
         }
